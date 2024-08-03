@@ -1,51 +1,39 @@
+type Value = {
+  value: number;
+  timer: ReturnType<typeof setTimeout>;
+};
+
 class TimeLimitedCache {
-  cache: Map<
-    number,
-    {
-      value: number;
-      expired: boolean;
-      timerId: ReturnType<typeof setTimeout> | null;
-    }
-  >;
+  cache: Map<number, Value>;
 
   constructor() {
     this.cache = new Map();
   }
 
   set(key: number, value: number, duration: number): boolean {
-    let alreadyExists = false;
+    let exists = this.cache.has(key);
 
-    if (this.cache.has(key)) {
-      const result = this.cache.get(key);
-      alreadyExists = true;
-      if (result?.timerId) clearTimeout(result.timerId);
+    if (exists) {
+      clearTimeout(this.cache.get(key)?.timer);
+      exists = true;
     }
 
-    const timerId = setTimeout(() => {
-      this.cache.set(key, { value, expired: true, timerId: null });
-    }, duration);
+    this.cache.set(key, {
+      value,
+      timer: setTimeout(() => {
+        this.cache.delete(key);
+      }, duration),
+    });
 
-    this.cache.set(key, { value, expired: false, timerId });
-
-    return alreadyExists;
+    return exists;
   }
 
   get(key: number): number {
-    const result = this.cache.get(key);
-
-    if (!result || result.expired) return -1;
-
-    return result.value;
+    return this.cache.has(key) ? this.cache.get(key)?.value! : -1;
   }
 
   count(): number {
-    let count = 0;
-
-    for (const [k, v] of this.cache) {
-      if (!v.expired) count++;
-    }
-
-    return count;
+    return this.cache.size;
   }
 }
 
