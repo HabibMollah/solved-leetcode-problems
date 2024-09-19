@@ -1,0 +1,2 @@
+# Read from the file file.txt and output all valid phone numbers to stdout.
+while IFS="\n" read LINE; do if [[ $LINE =~ ^((\([0-9]{3}\) )|([0-9]{3}-))[0-9]{3}-([0-9]{4})$ ]]; then echo $LINE; fi; done < file.txt
